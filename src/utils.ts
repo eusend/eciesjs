@@ -1,8 +1,10 @@
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto";
+// import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypto-browserify";
+import * as crypto from "crypto-browserify"
+
 import secp256k1 from "secp256k1";
 
 export function sha256(msg: Buffer): Buffer {
-    const hash = createHash("sha256");
+    const hash = crypto.createHash("sha256");
     hash.update(msg);
     return hash.digest();
 }
@@ -21,14 +23,14 @@ export function decodeHex(hex: string): Buffer {
 export function getValidSecret(): Buffer {
     let key: Buffer;
     do {
-        key = randomBytes(32);
+        key = crypto.randomBytes(32);
     } while (!secp256k1.privateKeyVerify(key));
     return key;
 }
 
 export function aesEncrypt(key: Buffer, plainText: Buffer): Buffer {
-    const nonce = randomBytes(16);
-    const cipher = createCipheriv("aes-256-gcm", key, nonce);
+    const nonce = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv("aes-256-gcm", key, nonce);
     const encrypted = Buffer.concat([cipher.update(plainText), cipher.final()]);
     const tag = cipher.getAuthTag();
     return Buffer.concat([nonce, tag, encrypted]);
@@ -38,7 +40,7 @@ export function aesDecrypt(key: Buffer, cipherText: Buffer): Buffer {
     const nonce = cipherText.slice(0, 16);
     const tag = cipherText.slice(16, 32);
     const ciphered = cipherText.slice(32);
-    const decipher = createDecipheriv("aes-256-gcm", key, nonce);
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, nonce);
     decipher.setAuthTag(tag);
     return Buffer.concat([decipher.update(ciphered), decipher.final()]);
 }
